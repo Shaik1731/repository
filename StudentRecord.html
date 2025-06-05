@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Student Record Management</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+    }
+
+    h2 {
+      margin-top: 40px;
+    }
+
+    form input, form button {
+      margin: 8px;
+      padding: 8px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+
+    th, td {
+      border: 1px solid #ccc;
+      padding: 8px;
+      text-align: center;
+    }
+
+    .highlight {
+      background-color: #d4edda;
+    }
+
+    #search {
+      margin: 10px 0;
+      padding: 8px;
+      width: 50%;
+    }
+
+    button.sort {
+      margin: 10px 5px;
+      padding: 6px 12px;
+    }
+
+    .stats {
+      margin: 10px 0;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Student Record Management</h1>
+
+  <form id="studentForm">
+    <input type="text" id="name" placeholder="Name" required />
+    <input type="text" id="batch" placeholder="Batch" required />
+    <input type="number" id="age" placeholder="Age" required />
+    <input type="number" id="score" placeholder="Score (0–100)" required />
+    <button type="submit">Submit</button>
+  </form>
+
+  <input type="text" id="search" placeholder="Search by name..." />
+
+  <div>
+    <button class="sort" onclick="sortByAge()">Sort by Age (Asc)</button>
+    <button class="sort" onclick="sortByScore()">Sort by Score (Desc)</button>
+  </div>
+
+  <div class="stats" id="stats"></div>
+
+  <table id="studentTable">
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Batch</th>
+        <th>Age</th>
+        <th>Score</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      
+    </tbody>
+  </table>
+
+  <script>
+    const form = document.getElementById("studentForm");
+    const tableBody = document.querySelector("#studentTable tbody");
+    const searchInput = document.getElementById("search");
+    const statsDiv = document.getElementById("stats");
+
+    let students = [];
+    let editIndex = -1;
+
+    form.addEventListener("submit", function (e) {
+      e.preventDefault();
+
+      const name = document.getElementById("name").value.trim();
+      const batch = document.getElementById("batch").value.trim();
+      const age = parseInt(document.getElementById("age").value);
+      const score = parseInt(document.getElementById("score").value);
+
+      if (!name || !batch || isNaN(age) || isNaN(score) || score < 0 || score > 100) {
+        alert("Please enter valid student details.");
+        return;
+      }
+
+      const student = { name, batch, age, score };
+
+      if (editIndex === -1) {
+        students.push(student);
+      } else {
+        students[editIndex] = student;
+        editIndex = -1;
+      }
+
+      form.reset();
+      renderTable();
+    });
+
+    function renderTable() {
+      const filter = searchInput.value.toLowerCase();
+      tableBody.innerHTML = "";
+
+      const filteredStudents = students.filter(s =>
+        s.name.toLowerCase().includes(filter)
+      );
+
+      filteredStudents.forEach((student, index) => {
+        const row = document.createElement("tr");
+
+        if (student.score > 80) {
+          row.classList.add("highlight");
+        }
+
+        row.innerHTML = `
+          <td>${student.name}</td>
+          <td>${student.batch}</td>
+          <td>${student.age}</td>
+          <td>${student.score}</td>
+          <td>
+            <button onclick="editStudent(${index})">Edit</button>
+            <button onclick="deleteStudent(${index})">Delete</button>
+          </td>
+        `;
+        tableBody.appendChild(row);
+      });
+
+      updateStats();
+    }
+
+    function deleteStudent(index) {
+      students.splice(index, 1);
+      renderTable();
+    }
+
+    function editStudent(index) {
+      const student = students[index];
+      document.getElementById("name").value = student.name;
+      document.getElementById("batch").value = student.batch;
+      document.getElementById("age").value = student.age;
+      document.getElementById("score").value = student.score;
+      editIndex = index;
+    }
+
+    function sortByAge() {
+      students.sort((a, b) => a.age - b.age);
+      renderTable();
+    }
+
+    function sortByScore() {
+      students.sort((a, b) => b.score - a.score);
+      renderTable();
+    }
+
+    function updateStats() {
+      const total = students.length;
+      const avg =
+        total > 0
+          ? (
+              students.reduce((sum, s) => sum + s.score, 0) / total
+            ).toFixed(2)
+          : 0;
+      statsDiv.textContent = `Total Students: ${total}, Average Score: ${avg}`;
+    }
+
+    searchInput.addEventListener("input", renderTable);
+  </script>
+</body>
+</html>
