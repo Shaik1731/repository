@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>InsightPilse</title>
+</head>
+<body>
+    <h2>Insigth Pulse- Sales Feedback </h2>
+    <div  id="roleSelect">
+        <button onclick="setRole('agent')" >Agent</button>
+        <button onclick="setRole('lead')" >Lead</button>
+    </div>
+    <div id="agentForm"  class="hidden">
+    <h3>Agent Feedback submission Form</h3>
+    <div  id="offlineBanner"  ></div>
+    <form id="feedbackForm">
+        <input required placeholder="Agent Name" id="agent" /> <br> 
+         <input required placeholder="Client Company" id="company" /> <br> 
+      <select id="deparment">
+        <option value="SaaS">SaaS</option>
+         <option value="Hardware">Hardware</option>
+          <option value="Consulting">Consulting</option>
+           <option value="Other">Other</option>
+      </select><br>
+      <input required type="number"  placeholder="Satisfaction Score(i-5)" id="score" /><br>
+      <input type="number" placeholder="NPS(-100 to +100)"  id="nps" /><br>
+      <textarea placeholder="Comment" id="comment"></textarea><br>
+       <button  type="submit">submit</button>
+        </form>
+      </div>
+      <div id="leadDashboard" class="hidden">
+        <h3>Performance DashBoard</h3>
+        <input placeholder="Search Agent/Company" id="Search" /> <br>
+        <select  id="filterDept"><option value=" ">All Depts</option> </select>
+        <select  id="filterAgent"><option value=" ">All Agent</option> </select>
+        <button  onclick="syncOffline()">sync Now</button>
+        <div id="analytice"></div>
+        <table id="dataTable"></table>
+
+    </div>
+     
+</body>
+</html>
