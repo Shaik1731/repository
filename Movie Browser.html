@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Movie Browser</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #f5f5f5; }
+    header { background: #333; color: white; padding: 1rem; text-align: center; }
+    .controls { display: flex; flex-wrap: wrap; justify-content: center; gap: 1rem; padding: 1rem; background: #fff; }
+    select, button { padding: 0.5rem; font-size: 1rem; }
+    .movies { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1rem; padding: 1rem; }
+    .movie { background: white; border-radius: 5px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+    .movie img { width: 100%; height: 300px; object-fit: cover; }
+    .movie-content { padding: 0.5rem; }
+    .movie-content h3 { margin: 0.5rem 0; font-size: 1.1rem; }
+    .pagination { display: flex; justify-content: center; align-items: center; gap: 1rem; padding: 1rem; }
+    .watch-later-btn { margin-top: 0.5rem; background: #007bff; color: white; border: none; padding: 0.4rem 0.6rem; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Movie Browser</h1>
+  </header>
+  <div class="controls">
+    <select id="genreFilter">
+      <option value="">All Genres</option>
+    </select>
+    <select id="sortOrder">
+      <option value="">Sort By</option>
+      <option value="rating">Rating: High to Low</option>
+      <option value="title">Title: A-Z</option>
+    </select>
+  </div>
+  <div class="movies" id="movies"></div>
+  <div class="pagination">
+    <button id="prev">Previous</button>
+    <span id="pageNumber"></span>
+    <button id="next">Next</button>
+  </div>
+
+  <script>
+    const API_URL = 'https://api.tvmaze.com/shows';
+    const ITEMS_PER_PAGE = 6;
+    let shows = [], filteredShows = [], currentPage = 1, genreList = [];
+
+    const moviesEl = document.getElementById('movies');
+    const pageNumberEl = document.getElementById('pageNumber');
+    const prevBtn = document.getElementById('prev');
+    const nextBtn = document.getElementById('next');
+    const genreFilter = document.getElementById('genreFilter');
+    const sortOrder = document.getElementById('sortOrder');
+
+    async function fetchShows() {
+      const res = await fetch(API_URL);
+      const data = await res.json();
+      shows = data;
+      genreList = [...new Set(shows.flatMap(show => show.genres))].sort();
+      populateGenres();
+      applyFiltersAndSorting();
+      loadState();
+    }
+
+    function populateGenres() {
+      genreList.forEach(genre => {
+        const option = document.createElement('option');
+        option.value = genre;
+        option.textContent = genre;
+        genreFilter.appendChild(option);
+      });
+    }
+
+    function applyFiltersAndSorting() {
+      const genre = genreFilter.value;
+      filteredShows = genre ? shows.filter(show => show.genres.includes(genre)) : [...shows];
+      if (sortOrder.value === 'rating') {
+        filteredShows.sort((a, b) => (b.rating.average || 0) - (a.rating.average || 0));
+      } else if (sortOrder.value === 'title') {
+        filteredShows.sort((a, b) => a.name.localeCompare(b.name));
+      }
+      currentPage = 1;
+      saveState();
+      renderMovies();
+    }
+
+    function renderMovies() {
+      moviesEl.innerHTML = '';
+      const start = (currentPage - 1) * ITEMS_PER_PAGE;
+      const pageShows = filteredShows.slice(start, start + ITEMS_PER_PAGE);
+      pageShows.forEach(show => {
+        const div = document.createElement('div');
+        div.className = 'movie';
+        div.innerHTML = `
+          <img src="${show.image?.medium || ''}" alt="${show.name}" />
+          <div class="movie-content">
+            <h3>${show.name}</h3>
+            <p>Genres: ${show.genres.join(', ')}</p>
+            <p>Rating: ${show.rating.average || 'N/A'}</p>
+            <button class="watch-later-btn" data-id="${show.id}">Watch Later</button>
+          </div>`;
+        moviesEl.appendChild(div);
+      });
+      pageNumberEl.textContent = `Page ${currentPage} of ${Math.ceil(filteredShows.length / ITEMS_PER_PAGE)}`;
+    }
+
+    prevBtn.onclick = () => {
+      if (currentPage > 1) {
+        currentPage--;
+        saveState();
+        renderMovies();
+      }
+    };
+
+    nextBtn.onclick = () => {
+      if (currentPage < Math.ceil(filteredShows.length / ITEMS_PER_PAGE)) {
+        currentPage++;
+        saveState();
+        renderMovies();
+      }
+    };
+
+    genreFilter.onchange = applyFiltersAndSorting;
+    sortOrder.onchange = applyFiltersAndSorting;
+
+    moviesEl.addEventListener('click', (e) => {
+      if (e.target.classList.contains('watch-later-btn')) {
+        const id = e.target.dataset.id;
+        const show = shows.find(s => s.id == id);
+        let saved = JSON.parse(localStorage.getItem('watchLater')) || [];
+        if (!saved.find(s => s.id == show.id)) {
+          saved.push({ id: show.id, name: show.name });
+          localStorage.setItem('watchLater', JSON.stringify(saved));
+          e.target.textContent = 'Saved';
+        }
+      }
+    });
+
+    function saveState() {
+      localStorage.setItem('browserState', JSON.stringify({
+        genre: genreFilter.value,
+        sort: sortOrder.value,
+        page: currentPage
+      }));
+    }
+
+    function loadState() {
+      const state = JSON.parse(localStorage.getItem('browserState'));
+      if (state) {
+        genreFilter.value = state.genre;
+        sortOrder.value = state.sort;
+        currentPage = state.page || 1;
+        applyFiltersAndSorting();
+      } else {
+        renderMovies();
+      }
+    }
+
+    fetchShows();
+  </script>
+</body>
+</html>
