@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        body{
+            font-family: Arial, Helvetica, sans-serif;
+            padding: 20px;
+            overscroll-behavior-block: rgb(16, 15, 15);
+        }
+        h1,h2{
+            color: aqua;
+        }
+        .controls {
+         margin-bottom: 15px;
+        }
+        select,input,button{
+            padding: 7px;
+            margin: 6px;
+        }
+        .container{
+            display: flex;
+            flex-wrap: wrap;
+        }
+        .card{
+            background: pink;
+        }
+    </style>
+</head>
+<body>
+    <h1> Realtime Product Dashboard </h1>
+    <div class="controls">
+        <button onclick="loadDummyProduct()">Load Dummy Product</button>
+        <select  id="sort"  onclick="applySort()">
+            <option value="price"> Sort by price</option>
+            <option value="title">Sort by name</option>
+        </select>
+
+    </div>
+    <div id="product-container" class="container"></div>
+     <h2>Add Product Firebase</h2>
+     <form id="productForm">
+        <input type="text" id="title" placeholder="Title"  required />
+        <input type="text" id="description " placeholder="Description" />
+         <input type="number" id="price " placeholder="price"  required />
+     <input type="text" id="thumbnail " placeholder="Tuumbnail URL "  required />
+      <button type="submit"> Add</button>
+    
+    </form>
+    <h2>Fire Base Product</h2>
+    <div id="Firebase-container" class="container"></div>
+    <script>
+        const dummyURL='https://dummyjson.com/products' ;
+
+     let products=[]
+     let currentSort=localStorage.getItem("sort") || "price";
+     document.getElementById("sort").value=currentSort;
+     function loadDummyProduct(){
+        fetch(dummyURL)
+        .then(res => res.json())
+        .then(data => {
+            products=data.products;
+            applySort();
+        });
+     }
+     function applySort(){
+        currentSort=document.getElementById("sort").value;
+        localStorage.setItem("sort",currentSort);
+        products.sort((a,b)=> {
+            return currentSort==='price' ? a.price -b.price : a.title.localeCompare(b.title);
+        });
+        function renderProducts(productList){
+            const container=document.getElementById("product-container");
+            container.innerHTML="";
+            productList.forEach(prod =>{
+                const card=document.createElement("div");
+                card.className="card";
+                card.innerHTML=`
+                <img scr="${prod.thumbail}" alt="product Image">
+                <h3> ${prod.title} </h3>
+                <p>${prod.description} </p>
+                <p><strong>$${prod.price}<strong></p>
+                `;
+                container.appendChild(card);
+            });
+        }
+        
+     }
+     function renderProducts(products){
+        const container=document.getElementById("firebase-container");
+        container.innerHTML="";
+        products.forEach((id,prod) =>{
+        const container =document.getElementById("div");
+        card.className='card firebase-card';
+        card.innerHTML=`
+        <img src="${prod.thumbail}"  alt=product Image">
+        <input value="${prod.title}" id="title-${id}" />
+        <input value="${prod.description}" id="desc=${id}" />
+        <input value="${prod.price}" type='number' id="price-${id}" />
+        <button onclick="delereProduct('${id}'')">Delete</button>
+         <button onclick="updataProduct('${id}'')">Updata</button>
+        `;
+        container.appendChild(card)
+        });
+        }
+   </script>
+</body>
+</html>
